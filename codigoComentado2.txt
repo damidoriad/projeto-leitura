@@ -1,0 +1,171 @@
+# Bibliotecas em Julia:
+using WAV
+using PyPlot
+using DSP
+using LinearAlgebra
+
+######################
+###   Funções  #######
+######################
+
+function meuLPC(s,fa)
+	Janela = Int(round(0.03*fa)); # Número de amostras correspondentes a 30 ms de sinal
+	Avanco = Int(round(0.01*fa)); # Número de amostras correspondentes a 10 ms de sinal
+	Ordem = Int(round(0.001*fa)); # Número de amostras correspondentes a 1 ms de sinal
+	marcas = 1:Avanco:(length(s)-Janela);
+	CP = zeros(Ordem,length(marcas));
+	Pot = zeros(1,length(marcas));	
+	TCZ = zeros(1,length(marcas));
+	S = zeros(Janela-Ordem,Ordem+1);
+	cont = 1;
+	for k in marcas # a variável de controle k avança a passos iguais a 'Avanco' amostras até o final do sinal, com um recuo de 'Janela' amostras por garantia.
+		saux = s[k:k+Janela-1]; # um segmento do sinal s de tamanho 'Janela' amostras (correspondente a 30 ms) é tomado para análise
+		# Computação da potência do segmento de sinal:
+		Pot[cont] = sum(saux.^2)/length(saux); # A potência do segmento de sinal saux é anexada ao vetor de potências.
+		# Computação da taxa de cruzamento por zeros do segmento de sinal:
+		pz = findall(saux[2:end] .> 0 .&& saux[1:end-1] .< 0); #pz corresponde aos instantes de cruzamento por zero no sentido ascendente
+		TCZ[cont] = length(pz)*fa/Janela;
+		# Computação dos coeficientes de predição linear do segmento de sinal:	
+		for m in 1:Ordem+1
+			# 'Ordem' segmentos de aproximadamente 30 ms de sinal são organizados nas colunas da matriz S. 
+			# Cada coluna corresponde a uma versão do mesmo sinal deslocado (atrasado) em uma amostra (1/fa segundos).
+			S[:,m] = saux[m:end-(Ordem+1)+m]; 
+		end
+		#C = inv(S[:,1:end-1]'*S[:,1:end-1] .+ eps())*S[:,1:end-1]'*S[:,end]; # Usando a pseudo-inversão, é possível se estimar um conjunto de coeficientes C que, quando usados como pesos na soma ponderada das primeiras colunas de S, geram com mínimo erro (quadrático) de reconstrução a última coluna de S. Ou seja, C corresponde aos coeficientes ótimos do preditor linear, sob o critério do erro quadrático.
+		C = pinv(S[:,1:end-1])*S[:,end];
+		# VERIFICAR USO DE PSEUDO INVERSAO MAIS ROBUSTA
+		CP[:,cont] = C; # Cada preditor linear (representado pelo vetor de coeficientes C) deve ocupar uma coluna de CP.
+		cont = cont +1;
+	end
+	return CP, Pot, TCZ
+end
+
+function specLPC(CP)
+	w = collect((5000/fa)*pi:-(50/fa)*pi:(150/fa)*pi); # A ser testado ################
+	#w = collect(pi:-0.1:0);
+	P = zeros(length(w),size(CP,2));
+	for k in 1:size(CP,2)
+		h = [1; -CP[end:-1:1,k]];
+		for i in 1:length(w)
+			P[i,k] = abs(1/sum(exp.(-im.*w[i]*collect(0:length(h)-1)).*h));
+		end
+		#P[:,k] = P[:,k]/sum(P[:,k]);
+	end
+	#P = P/maximum(P);
+	for k in 1:size(P,1)
+       P[k,:] = P[k,:]/maximum(P[k,:]);
+    end
+	return P
+end
+
+function espectrograma(x,fa)
+	# Escala musical temperada:
+	p = collect(log2(80):4/24:log2(fa/2));
+	f = (2*ones(length(p))).^p;
+	Janela = Int(round(0.025*fa));
+	blackman=0.42.-0.5*cos.(2*pi*(0:Janela-1)/(Janela)).+0.08*cos.(4*pi*(0:Janela-1)/(Janela));
+	B = complex(zeros(length(f),Janela));
+	t = collect(0:Janela-1)/fa;
+	for k in 1:length(f)
+		B[k,:]=exp.(im*2*pi*f[k]*t).*blackman;
+	end
+	avanco = Int(round(Janela/4));
+	marcas = 1:avanco:length(x)-Janela+1;
+	M = length(marcas);
+	S=zeros(length(f),M);
+	cont=1;
+	for n in marcas
+       S[end:-1:1,cont] = abs.(B*x[n:n+Janela-1]);
+       cont=cont+1;
+    end
+	for canal in 1:length(f)
+		S[canal,:] = S[canal,:] .- minimum(S[canal,:]) .+ 1e-6;
+		#S[canal,:] = (1/maximum(S[canal,:]))*S[canal,:];
+		S[canal,:] = (1/maximum(S))*S[canal,:];
+	end	
+	return S
+end
+
+function geraFrases(S)
+	q = Array{String}(undef,size(S,1));
+	frase = Array{String}(undef,size(S,2));
+	for col in 1:size(S,2)
+		#S[:,k] = S[:,k]/sum(S[:,k]);
+		
+		pp = findall(S[:,col] .> 0.5); 
+		q[pp] .= "a";
+		pp = findall(S[:,col] .> 0.25 .&& S[:,col] .<= 0.5); 
+		q[pp] .= "b";
+		pp = findall(S[:,col] .> 0.125 .&& S[:,col] .<= 0.25); 
+		q[pp] .= "c";
+		pp = findall(S[:,col] .<= 0.125); q[pp] .= "d";
+		# pp = findall(S[:,col] .<= 0.25); 
+		# q[pp] .= "c";
+		palavra = "";
+		for k in 1:length(q)
+			palavra = palavra*q[k];
+		end
+		frase[col] = palavra;
+	end
+	return frase
+end
+
+function lempelziv76(s)
+	K=length(unique(s));
+    N = length(s);
+	# Máxima complexidade (teórica):
+	#C = N/(log(N)/log(K));
+	# Em bits:
+	#C = N/(log2(N));
+
+	L = 1;
+	dic = [s[1]];
+	p = 2;
+	
+	L = L+1;
+	while p+L-1 < N
+		achou = occursin(join(s[p:p+L-1]),join(s[1:p+L-2]));
+		if !achou
+			push!(dic,join(s[p:p+L-1]));
+			p = p+L;
+			L = 0;
+		else
+			L = L+1;
+		end
+	
+	end
+	push!(dic,join(s[p:end]));
+	
+	# Complexidade de Lempel-Ziv, em bits por símbolo:
+	#cLZ = length(dic)/C;
+	cLZ = length(dic)*(log2(length(dic))+1)/N;
+	return dic, cLZ
+end
+
+
+
+###################
+#### Principal ####
+###################
+
+# caminho = "C:/_PROJETOS/2023_Colaborativa/bases de vozes/Audios/Soletrou/";
+# x,fa =wavread(caminho*"1 - Soletrou.wav");
+
+caminho = "C:/_PROJETOS/2023_Colaborativa/bases de vozes/Audios/Silabou/";
+x,fa =wavread(caminho*"1-Silabou.wav");
+
+# caminho = "C:/_PROJETOS/2023_Colaborativa/bases de vozes/Audios/Fluente/";
+# x,fa =wavread(caminho*"1 - Fluente.wav");
+
+#x,fa =wavread("ai.wav");
+
+x = resample(x,16000/fa, dims=1); # Ajusta taxa de amostragem para 16 KHz
+fa = 16000;
+
+#CP, Pot, TCZ = meuLPC(x,fa);
+#P = specLPC(CP);
+
+P = espectrograma(x,fa);
+frase = geraFrases(P);
+dic,c = lempelziv76(frase);
+println(c)
