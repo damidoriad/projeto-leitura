@@ -1,0 +1,13 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 129 i~
+129 151 tc
+151 224 tS
+224 282 i
+282 369 s
+369 496 ej
+496 594 z
+594 806 ax~
+806 985 n
+985 1196 s
+1196 1296 .pau

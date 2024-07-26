@@ -1,0 +1,13 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 4 .pau
+4 19 d
+19 88 z
+88 175 oj
+175 247 tc
+247 275 t
+275 469 wax~
+469 530 n
+530 601 u
+601 739 s
+739 839 .pau

@@ -1,0 +1,10 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 27 .pau
+27 70 g
+70 254 wa
+254 421 i
+421 502 bc
+502 514 b
+514 662 a
+662 762 .pau

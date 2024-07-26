@@ -1,0 +1,13 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 72 .pau
+72 133 l
+133 259 o
+259 359 z
+359 564 ax~
+564 677 Z
+677 713 i
+713 792 l
+792 893 i
+893 1202 s
+1202 1302 .pau

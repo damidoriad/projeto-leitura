@@ -1,0 +1,15 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 100 .pau
+100 200 Z
+200 304 a
+304 335 r
+335 416 a
+416 478 gc
+478 511 g
+511 667 wa
+667 722 dc
+722 741 d
+741 918 s
+918 1148 uw
+1148 1248 .pau

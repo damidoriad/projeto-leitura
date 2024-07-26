@@ -1,0 +1,8 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 180 o~
+180 295 z
+295 650 jo~
+650 758 z
+758 975 i
+975 1200 .pau

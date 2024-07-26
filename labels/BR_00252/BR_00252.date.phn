@@ -1,0 +1,14 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 35 kc
+35 85 k
+85 170 wa
+170 222 r
+222 292 tc
+292 316 t
+316 370 a
+370 513 f
+513 633 ej
+633 691 r
+691 791 a
+791 1100 .pau

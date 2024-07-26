@@ -1,0 +1,11 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 25 x
+25 107 iw
+107 140 gc
+140 164 g
+164 221 r
+221 376 ax~
+376 458 dZ
+458 558 i
+558 900 .pau

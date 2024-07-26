@@ -1,0 +1,11 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 50 .pau
+50 75 m
+75 154 a
+154 210 kc
+210 223 k
+223 332 a
+332 404 x
+404 634 axw~
+634 734 .pau

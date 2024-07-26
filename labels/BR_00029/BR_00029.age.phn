@@ -1,0 +1,16 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 8 tc
+8 42 t
+42 99 r
+99 232 i~
+232 249 tc
+249 272 t
+272 373 ej
+373 411 kc
+411 445 k
+445 604 wa
+604 681 tc
+681 691 t
+691 809 r
+809 909 .pau

@@ -1,0 +1,9 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 10 .pau
+10 135 i
+135 175 dZ
+175 211 i
+211 258 n
+258 358 ej
+358 458 .pau

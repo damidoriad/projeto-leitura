@@ -1,0 +1,10 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 7 .pau
+7 161 ew
+161 185 r
+185 423 >
+423 521 pc
+521 560 p
+560 745 ax~
+745 1000 .pau

@@ -1,0 +1,13 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 74 o
+74 200 i
+200 323 ax~
+323 372 n
+372 462 ja
+462 503 gc
+503 531 g
+531 653 oj
+653 851 ja
+851 1085 s
+1085 1185 .pau

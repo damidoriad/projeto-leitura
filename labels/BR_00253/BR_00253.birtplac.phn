@@ -1,0 +1,11 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 27 .pau
+27 158 s
+158 303 axw~
+303 357 pc
+357 376 p
+376 588 aw
+588 663 l
+663 763 o
+763 1100 .pau

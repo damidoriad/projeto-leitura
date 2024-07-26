@@ -1,0 +1,6 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 81 z
+81 247 ax~
+247 377 n~
+377 1000 .pau

@@ -1,0 +1,13 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 99 i~
+99 136 t
+136 226 s
+226 325 E
+325 359 tc
+359 444 tS
+444 596 jax~
+596 654 n
+654 712 u
+712 901 s
+901 1200 .pau

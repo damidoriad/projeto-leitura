@@ -1,0 +1,6 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 23 .pau
+23 183 s
+183 516 i~
+516 1100 .pau

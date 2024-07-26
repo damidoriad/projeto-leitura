@@ -1,0 +1,10 @@
+MillisecondsPerFrame: 1.0
+END OF HEADER
+0 103 a
+103 163 gc
+163 175 g
+175 223 r
+223 424 E
+424 645 s
+645 812 ja
+812 911 .pau
