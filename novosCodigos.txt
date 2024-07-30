@@ -1,0 +1,93 @@
+# Esta função pega um audio que corresponde a um segmento de fonema da spoltech (s é só um fonema), e se o s não for nem curto demais (maior de 20 ms) nem longo demais (menor que 200 ms) para um fonema, o sinal s é dividido em 3 janelas e os LPC de cada janela são obtidos.
+function LPC3janelas(s,fa)
+	N = length(s);
+	if (N >= Int(round(0.02*fa))) && (N <= Int(round(0.2*fa)))
+	  Janela = Int(round(N/3)); 
+	  marcas = [1; Int(round((N-Janela)/2)); N-Janela+1];
+	  Ordem = Int(round(0.003*fa))
+	  CP = zeros(Ordem,3);
+	  S = zeros(Janela-Ordem,Ordem+1);
+		cont = 1;
+		for k in marcas
+			saux = s[k:k+Janela-1];	
+			for m in 1:Ordem+1
+				S[:,m] = saux[m:end-(Ordem+1)+m]; 
+			end
+			C = pinv(S[:,1:end-1])*S[:,end];
+			CP[:,cont] = C;
+			cont = cont +1;
+		end
+		return CP
+	else
+		return -1
+	end
+end
+
+
+
+#Com os 3 vetores de LPC, 3 espectros são calculados em escala log e empilhados para formar um padrão de norma unitária com 150 dimensões.
+function CP2vec(CP,fa)
+	w = collect((5000/fa)*pi:-(100/fa)*pi:(100/fa)*pi);
+	P = zeros(length(w),size(CP,2));
+	for k in 1:size(CP,2)
+		h = [1; -CP[end:-1:1,k]];
+		for i in 1:length(w)
+			P[i,k] = abs(1/sum(exp.(-im.*w[i]*collect(0:length(h)-1)).*h));
+		end
+	end
+	P = log10.(P/maximum(P) .+ 0.01) .+ 2; 
+	P = P[:]/sqrt(sum(P[:].^2));
+	return P
+end
+
+
+
+
+
+#Finalmente, a Spoltech é lida e cada padrão de 150 dimensões é pareado com o rótulo (fonema) correspondente.
+function principal()
+	# Leitura dos arquivos nas pastas:
+	caminhoPhn = "C:/_PROJETOS/2023_Colaborativa/bases de vozes/cslu_spolltech_port_LDC2006S16/labels";
+	caminhoWav = "C:/_PROJETOS/2023_Colaborativa/bases de vozes/cslu_spolltech_port_LDC2006S16/speech";
+	DirPhn = readdir(caminhoPhn);
+	#DirWav = readdir(caminhoWav);
+	B = zeros(150,1);
+	F = " ";
+	for k in 1:length(DirPhn)
+		#println(DirPhn[k])
+		A= filter(endswith(".phn"), readdir(caminhoPhn*"/"*DirPhn[k]));
+		for m in 1:length(A)
+		println(A[m])
+			arquivo = caminhoPhn*"/"DirPhn[k]"/"*A[m];
+			if le_phn(arquivo) !== -1		
+				pp, fon = le_phn(arquivo);
+				arquivo = caminhoWav*"/"DirPhn[k]"/"A[m][1:end-3]"wav";
+				try
+					x,fa =wavread(arquivo);
+					x = resample(x,16000/fa, dims=1); # Ajusta taxa de amostragem para 16 KHz
+					fa = 16000;
+					for i in 1:length(fon)
+						n = Int.(round.(pp[i,:]*fa/1000)) .+ 1;
+						n[2] = minimum([n[2],length(x)]);
+						s = x[n[1]:n[2]];
+						CP = LPC3janelas(s,fa);
+						if CP !== -1
+						 B = [B CP2vec(CP,fa)];
+						 F = [F fon[i]];
+						end
+					end
+				catch
+					println("Não achou: "*arquivo);
+				end
+			end
+		end	
+	end
+	B = B[:,2:end];
+	F = F[2:end];
+	
+	return B,F
+end
+
+
+
+
