@@ -1,11 +1,11 @@
 import numpy as np
-import pandas as pd
 from scipy import signal
 from scipy.io import wavfile
 from scipy.signal import find_peaks, peak_widths
 from scipy.special import softmax
 import os
 import pickle
+import sys
 
 with open('paramLet.pkl', 'rb') as f:
     Wl1, bl1, Wl2, bl2 = pickle.load(f)
@@ -13,7 +13,7 @@ with open('paramLet.pkl', 'rb') as f:
 with open('paramFon.pkl', 'rb') as f:
     Wf1, bf1, Wf2, bf2 = pickle.load(f)
 
-F0 = pd.read_csv('ConjuntoFonemas.csv', sep='\t', header=None)
+F0 = np.genfromtxt('ConjuntoFonemas.csv', delimiter='\t', dtype=str)
 
 def sigmoid(z):
     return 1/(1 + np.exp(-z))
@@ -155,7 +155,7 @@ def wav2ener2fon2(s, fa):
         P2[i,] = CP2vec(CP, fa).transpose()
     yp = modelFon(P2, Wf1, bf1, Wf2, bf2)
     inds = yp.argmax(axis=1)
-    aux = F0.values[inds].flatten()
+    aux = F0[inds].flatten()
     fonemas = np.zeros(E.shape[0], dtype=np.str_)
     fonemas[:] = '0'
     for i in range(segs.shape[1]):
@@ -191,3 +191,40 @@ def taxaLetras(s, fa):
         P2[i,] = CP2vec(CP, fa).transpose()
     yp = modelLet(P2, Wl1, bl1, Wl2, bl2)
     return (yp>0.5).sum()/len(yp)
+
+
+
+
+# Rotina
+
+dataPath = sys.argv[1]
+files = os.listdir(dataPath)
+fa = 16000
+for arq in files:
+    if arq.find('.wav')>-1:
+        print('Analisando o arquivo '+arq)
+        fs, s = wavfile.read(dataPath+'\\'+arq)
+        s = signal.resample(s, int(s.shape[0]*fa/fs))
+        fonemas = wav2ener2fon2(s, fa)
+        _, T1 = lempelziv76(fonemas)
+        T1 = T1.round(2)
+        T2 = taxaLetras(s, fa).round(2)
+        if T1>0.65:
+            if T2>0.52:
+                yp = 'Soletrando'
+            else:
+                yp = 'Fluente'
+        else:
+            if T2>0.52:
+                yp = 'Soletrando'
+            else:
+                yp = 'Silabando'
+        with open(dataPath+'\\'+arq[:-4]+'.rel', 'w') as file:
+            file.write('Medidas \t\t\t\t\t\t\tValores de referencia\r\r')
+            file.write('__________________________________________________________________________________________________________\r\r')
+            file.write('Taxa de bits por fonema: '+str(T1)+' bits/simbolo \t\t\tFluente: Maior que 0.65 bits/simbolo\r\r')
+            file.write('__________________________________________________________________________________________________________\r\r')
+            file.write('Taxa de letras detectadas por sons isolados: '+str(T2)+' \t\tSoletrando: Maior que 0.52\r\r')
+            file.write('__________________________________________________________________________________________________________\r\r')
+            file.write('Classificacao sugerida: '+yp)
+
